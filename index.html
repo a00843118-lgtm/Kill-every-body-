@@ -1,10 +1,332 @@
 <!DOCTYPE html>
-<html>
+<html lang="hi">
 <head>
-    <title>Kill-every-body Page</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PicPulse</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #000; color: #fff; display: flex; justify-content: center; min-height: 100vh; }
+        
+        .app-container { width: 100%; max-width: 480px; background-color: #000; min-height: 100vh; display: flex; flex-direction: column; position: relative; padding-bottom: 60px; }
+        
+        /* Top Header */
+        .top-header { position: sticky; top: 0; background-color: #000; border-bottom: 1px solid #1a1a1a; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; z-index: 100; }
+        .brand-container { display: flex; flex-direction: column; }
+        .brand-logo { font-size: 1.5rem; font-weight: 800; background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; }
+        .brand-sub { font-size: 0.65rem; color: #8e8e8e; font-weight: 500; margin-top: -2px; letter-spacing: 0.5px; }
+        .header-icons { display: flex; gap: 20px; font-size: 1.3rem; }
+        
+        /* Tab Views */
+        .tab-content { display: none; width: 100%; }
+        .tab-content.active { display: block; }
+        
+        /* Stories Bar */
+        .stories-container { display: flex; gap: 15px; padding: 12px 16px; overflow-x: auto; border-bottom: 1px solid #1a1a1a; scrollbar-width: none; }
+        .stories-container::-webkit-scrollbar { display: none; }
+        .story-item { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+        .story-ring { width: 64px; height: 64px; border-radius: 50%; padding: 2px; background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+        .story-img { width: 100%; height: 100%; border-radius: 50%; border: 2px solid #000; object-fit: cover; }
+        .story-username { font-size: 0.7rem; color: #f5f5f5; max-width: 65px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        
+        /* Post Styling */
+        .post { border-bottom: 1px solid #1a1a1a; margin-bottom: 10px; }
+        .post-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; }
+        .post-user-info { display: flex; align-items: center; gap: 10px; }
+        .post-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+        .post-username { font-size: 0.85rem; font-weight: 600; color: #fff; }
+        .post-img { width: 100%; max-height: 450px; object-fit: cover; background-color: #121212; }
+        .post-actions { display: flex; justify-content: space-between; padding: 10px 16px; font-size: 1.4rem; }
+        .left-actions { display: flex; gap: 16px; }
+        .action-icon { cursor: pointer; transition: transform 0.1s; }
+        .action-icon:active { transform: scale(1.2); }
+        .post-likes { padding: 0 16px; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; }
+        .post-caption { padding: 0 16px; font-size: 0.85rem; line-height: 1.3; }
+        .post-caption span { font-weight: 600; margin-right: 6px; }
+        .post-time { padding: 4px 16px 12px 16px; font-size: 0.7rem; color: #8e8e8e; text-transform: uppercase; }
+        
+        /* Search Tab */
+        .search-box-container { padding: 12px 16px; }
+        .search-input { width: 100%; background: #262626; border: none; border-radius: 8px; padding: 10px 16px; color: #fff; font-size: 0.9rem; outline: none; }
+        .search-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding-top: 10px; }
+        .search-grid img { width: 100%; height: 130px; object-fit: cover; }
+        
+        /* Create/Share Tab */
+        .create-container { padding: 20px 16px; display: flex; flex-direction: column; gap: 16px; align-items: center; text-align: center; }
+        .create-preview { width: 100%; height: 250px; background: #121212; border: 2px dashed #262626; border-radius: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; overflow: hidden; }
+        .create-preview img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .create-caption-input { width: 100%; background: #121212; border: 1px solid #262626; border-radius: 8px; padding: 12px; color: #fff; outline: none; resize: none; }
+        .share-btn { width: 100%; background: #0095f6; color: #fff; border: none; border-radius: 8px; padding: 12px; font-weight: 600; cursor: pointer; }
+        
+        /* Profile Tab */
+        .profile-header { padding: 16px; border-bottom: 1px solid #1a1a1a; }
+        .profile-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .profile-pic { width: 77px; height: 77px; border-radius: 50%; object-fit: cover; border: 1px solid #262626; }
+        .profile-stats { display: flex; gap: 20px; text-align: center; }
+        .stat-num { font-weight: 700; font-size: 1rem; }
+        .stat-label { font-size: 0.75rem; color: #8e8e8e; }
+        .profile-bio h2 { font-size: 0.9rem; font-weight: 600; }
+        .profile-bio p { font-size: 0.85rem; color: #f5f5f5; margin-top: 2px; line-height: 1.3; }
+        
+        /* Bottom Navigation Bar */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 480px; background-color: #000; border-top: 1px solid #1a1a1a; display: flex; justify-content: space-around; align-items: center; height: 50px; z-index: 100; }
+        .nav-item { cursor: pointer; font-size: 1.3rem; opacity: 0.6; transition: opacity 0.2s; }
+        .nav-item.active { opacity: 1; }
+        .nav-avatar { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1.5px solid #fff; }
+    </style>
 </head>
-<body style="text-align: center; margin-top: 50px; font-family: Arial; background-color: #111; color: #fff;">
-    <h1>Welcome to Kill-every-body ⚡</h1>
-    <p>Yeh mera custom page live ho chuka hai!</p>
+<body>
+
+<div class="app-container">
+    
+    <!-- Header -->
+    <div class="top-header">
+        <div class="brand-container">
+            <div class="brand-logo">PicPulse</div>
+            <div class="brand-sub">from ansari</div>
+        </div>
+        <div class="header-icons">
+            <span>❤️</span>
+            <span>⚡</span>
+        </div>
+    </div>
+
+    <!-- TAB 1: HOME FEED -->
+    <div id="home-tab" class="tab-content active">
+        <!-- Stories -->
+        <div class="stories-container">
+            <div class="story-item">
+                <div class="story-ring">
+                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150" class="story-img">
+                </div>
+                <div class="story-username">Your story</div>
+            </div>
+            <div class="story-item">
+                <div class="story-ring">
+                    <img src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150" class="story-img">
+                </div>
+                <div class="story-username">khabib_norm</div>
+            </div>
+            <div class="story-item">
+                <div class="story-ring">
+                    <img src="https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=150" class="story-img">
+                </div>
+                <div class="story-username">chimaev_01</div>
+            </div>
+            <div class="story-item">
+                <div class="story-ring">
+                    <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150" class="story-img">
+                </div>
+                <div class="story-username">makhachev_t</div>
+            </div>
+        </div>
+
+        <!-- Feed List -->
+        <div id="feed-list">
+            <div class="post">
+                <div class="post-header">
+                    <div class="post-user-info">
+                        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150" class="post-avatar">
+                        <div class="post-username">altamash</div>
+                    </div>
+                    <div>•••</div>
+                </div>
+                <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600" class="post-img">
+                <div class="post-actions">
+                    <div class="left-actions">
+                        <span class="action-icon" onclick="toggleLike(this)">🤍</span>
+                        <span class="action-icon">💬</span>
+                        <span class="action-icon">✈️</span>
+                    </div>
+                    <span class="action-icon">🔖</span>
+                </div>
+                <div class="post-likes"><span class="like-count">142</span> likes</div>
+                <div class="post-caption"><span>altamash</span> Welcome to PicPulse! Building full web experience 🔥</div>
+                <div class="post-time">2 hours ago</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: SEARCH -->
+    <div id="search-tab" class="tab-content">
+        <div class="search-box-container">
+            <input type="text" class="search-input" placeholder="Search users, tags, or topics...">
+        </div>
+        <div class="search-grid">
+            <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=300">
+            <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=300">
+            <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=300">
+            <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=300">
+            <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=300">
+            <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=300">
+        </div>
+    </div>
+
+    <!-- TAB 3: CREATE / SHARE -->
+    <div id="create-tab" class="tab-content">
+        <div class="create-container">
+            <h3>New Post</h3>
+            <div class="create-preview" onclick="document.getElementById('post-file').click()">
+                <div id="upload-placeholder">
+                    <p style="font-size: 2rem;">📷</p>
+                    <p style="color: #8e8e8e; font-size: 0.85rem; margin-top: 6px;">Tap to select photo</p>
+                </div>
+                <img id="preview-img">
+            </div>
+            <input type="file" id="post-file" accept="image/*" style="display:none" onchange="previewSelectedImage(this)">
+            <textarea id="caption-input" class="create-caption-input" rows="3" placeholder="Write a caption..."></textarea>
+            <button class="share-btn" onclick="publishPost()">Share Post</button>
+        </div>
+    </div>
+
+    <!-- TAB 4: PROFILE -->
+    <div id="profile-tab" class="tab-content">
+        <div class="profile-header">
+            <div class="profile-top">
+                <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150" class="profile-pic">
+                <div class="profile-stats">
+                    <div>
+                        <div class="stat-num" id="profile-post-count">1</div>
+                        <div class="stat-label">Posts</div>
+                    </div>
+                    <div>
+                        <div class="stat-num">582</div>
+                        <div class="stat-label">Followers</div>
+                    </div>
+                    <div>
+                        <div class="stat-num">310</div>
+                        <div class="stat-label">Following</div>
+                    </div>
+                </div>
+            </div>
+            <div class="profile-bio">
+                <h2>Altamash</h2>
+                <p>Web Developer & Combat Sports Fan 🥊<br>Building PicPulse | from ansari</p>
+            </div>
+        </div>
+        <div class="search-grid" id="profile-grid">
+            <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300">
+        </div>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('home-tab', this)">🏠</div>
+        <div class="nav-item" onclick="switchTab('search-tab', this)">🔍</div>
+        <div class="nav-item" onclick="switchTab('create-tab', this)">➕</div>
+        <div class="nav-item" onclick="switchTab('profile-tab', this)">
+            <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150" class="nav-avatar">
+        </div>
+    </div>
+
+</div>
+
+<script>
+    let uploadedImageBase64 = null;
+    let postCount = 1;
+
+    // Switch Bottom Tabs
+    function switchTab(tabId, navElement) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+        
+        document.getElementById(tabId).classList.add('active');
+        navElement.classList.add('active');
+    }
+
+    // Like Button Toggle
+    function toggleLike(element) {
+        const likesElem = element.closest('.post').querySelector('.like-count');
+        let count = parseInt(likesElem.innerText);
+
+        if (element.innerText === '🤍') {
+            element.innerText = '❤️';
+            likesElem.innerText = count + 1;
+        } else {
+            element.innerText = '🤍';
+            likesElem.innerText = count - 1;
+        }
+    }
+
+    // Image Upload Preview
+    function previewSelectedImage(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                uploadedImageBase64 = e.target.result;
+                const previewImg = document.getElementById('preview-img');
+                previewImg.src = uploadedImageBase64;
+                previewImg.style.display = 'block';
+                document.getElementById('upload-placeholder').style.display = 'none';
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Share Post Function
+    function publishPost() {
+        const caption = document.getElementById('caption-input').value.trim();
+        
+        if (!uploadedImageBase64 && !caption) {
+            alert("Please select a photo or write a caption!");
+            return;
+        }
+
+        const feedList = document.getElementById('feed-list');
+        const profileGrid = document.getElementById('profile-grid');
+        
+        const newPost = document.createElement('div');
+        newPost.className = 'post';
+
+        let imageTag = uploadedImageBase64 ? `<img src="${uploadedImageBase64}" class="post-img">` : '';
+
+        newPost.innerHTML = `
+            <div class="post-header">
+                <div class="post-user-info">
+                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150" class="post-avatar">
+                    <div class="post-username">altamash</div>
+                </div>
+                <div>•••</div>
+            </div>
+            ${imageTag}
+            <div class="post-actions">
+                <div class="left-actions">
+                    <span class="action-icon" onclick="toggleLike(this)">🤍</span>
+                    <span class="action-icon">💬</span>
+                    <span class="action-icon">✈️</span>
+                </div>
+                <span class="action-icon">🔖</span>
+            </div>
+            <div class="post-likes"><span class="like-count">0</span> likes</div>
+            <div class="post-caption"><span>altamash</span> ${caption}</div>
+            <div class="post-time">Just now</div>
+        `;
+
+        // Insert at the top of Feed
+        feedList.prepend(newPost);
+
+        // Add to Profile Grid if Image exists
+        if (uploadedImageBase64) {
+            const gridImg = document.createElement('img');
+            gridImg.src = uploadedImageBase64;
+            profileGrid.prepend(gridImg);
+        }
+
+        // Update Post Count
+        postCount++;
+        document.getElementById('profile-post-count').innerText = postCount;
+
+        // Reset Create Form
+        document.getElementById('caption-input').value = '';
+        document.getElementById('preview-img').style.display = 'none';
+        document.getElementById('upload-placeholder').style.display = 'block';
+        uploadedImageBase64 = null;
+
+        // Redirect to Home Tab
+        switchTab('home-tab', document.querySelectorAll('.nav-item')[0]);
+    }
+</script>
+
 </body>
-</html>
+                </html>
+                
